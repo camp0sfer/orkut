@@ -118,10 +118,10 @@ export default function Home() {
             </ul>
           </RelationsBoxWrapper>
           <RelationsBoxWrapper>
-          <h2 className="smallTitle">
+            <h2 className="smallTitle">
               Comunidades ({comunidades.length})
             </h2>
-          <ul>
+            <ul>
               {comunidades.map((itemAtual) => {
                 return (
                   <li key={itemAtual.id}>
