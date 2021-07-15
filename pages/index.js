@@ -4,6 +4,8 @@ import Box from '../src/components/Box'
 import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/OrkutCommons';
 import { RelationsBoxWrapper } from '../src/components/Relations';
 
+// xidefod256@nhmty.com
+
 function ProfileSidebar(propriedades) {
   return (
     <Box>
@@ -17,9 +19,32 @@ function ProfileSidebar(propriedades) {
       </p>
 
       <hr />
-
       <AlurakutProfileSidebarMenuDefault />
     </Box>
+  )
+}
+
+function ProfileRelationsBox(propriedades) {
+  return (
+    <RelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {propriedades.title} ({propriedades.items.length})
+      </h2>
+      <ul>
+        {
+          propriedades.items.map((followers) => {
+            return (
+              <li key={followers.id}>
+                <a href={followers.html_url}>
+                  <img src={`https://github.com/${followers.login}.png`} />
+                  <span>{followers.login}</span>
+                </a>
+              </li>
+            )
+          })
+        }
+      </ul>
+    </RelationsBoxWrapper>
   )
 }
 
@@ -45,6 +70,21 @@ export default function Home() {
     'marcobrunodev',
     'felipefialho'
   ]
+
+  const [seguidores, setSeguidores] = React.useState([]);
+  // 0- Pegar um array de dados do github
+  React.useEffect(function() {
+    fetch('https://api.github.com/users/camp0sfer/followers')
+    .then(function (respServidor) {
+      return respServidor.json();
+    })
+    .then(function(respostaCompleta) {
+      console.log(respostaCompleta);
+      setSeguidores(respostaCompleta);
+    });
+  }, [])
+
+  // 1- Criar um box que vai ter um map, baseado nos itens do array do giy
 
   return (
     <>
@@ -99,6 +139,8 @@ export default function Home() {
           </Box>
         </div>
         <div className="relationsArea" style={{ gridArea: 'relationsArea' }}>
+          <ProfileRelationsBox title="Seguidores" items={seguidores} />
+
           <RelationsBoxWrapper>
             <h2 className="smallTitle">
               Amigos ({amigos.length})
