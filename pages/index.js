@@ -49,18 +49,6 @@ function ProfileRelationsBox(propriedades) {
 }
 
 export default function Home() {
-  const [comunidades, setComunidades] = React.useState([
-    {
-      id: '15156156564561',
-      title: 'Eu Odeio Acordar Cedo',
-      image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
-    },
-    {
-    id: '151561561',
-    title: 'Grand Chase',
-    image: 'https://pbs.twimg.com/profile_images/1410080759378022402/MpcsJ4KP_400x400.jpg'
-  }
-]);
   const gitUser = 'camp0sFer';
   const amigos = [
     'fbianca',
@@ -71,7 +59,9 @@ export default function Home() {
     'felipefialho'
   ]
 
+  const [comunidades, setComunidades] = React.useState([]);
   const [seguidores, setSeguidores] = React.useState([]);
+
   // 0- Pegar um array de dados do github
   React.useEffect(function() {
     fetch('https://api.github.com/users/camp0sfer/followers')
@@ -79,9 +69,31 @@ export default function Home() {
       return respServidor.json();
     })
     .then(function(respostaCompleta) {
-      console.log(respostaCompleta);
       setSeguidores(respostaCompleta);
     });
+
+    // API GraphQL
+    fetch('https://graphql.datocms.com/', {
+      method: 'POST',
+      headers : {
+        'Authorization': '09414f8740f0de8f299ee5e1046240',
+        'Content-Type' : 'application/json',
+        'Accept' : 'application/json',
+      },
+      body : JSON.stringify({ "query": `query {
+        allCommunities {
+          id
+          title
+          imageUrl
+          creatorSlug
+        }
+      }` })
+    })
+    .then((response) => response.json())
+    .then((respostaCompleta) => {
+      const comunidadesDato = respostaCompleta.data.allCommunities;
+      setComunidades(comunidadesDato);
+    })
   }, [])
 
   // 1- Criar um box que vai ter um map, baseado nos itens do array do giy
@@ -104,17 +116,31 @@ export default function Home() {
 
           <Box>
             <h2 className="subTitle">O que você deseja fazer?</h2>
-            <form onSubmit={function handleCriaComunidade(e) {
+            <form onSubmit={function handleCriaComunidade(e){
               e.preventDefault();
+              
+              //traz os dados do formulario
               const dadosDoForm = new FormData(e.target);
-
+              
               const comunidade = {
-                id: new Date().toISOString,
                 title: dadosDoForm.get('title'),
-                image: dadosDoForm.get('image'),
+                imageUrl: dadosDoForm.get('image'),
+                creatorSlug: gitUser
               }
-              const comunidadesAtualizadas = [...comunidades, comunidade];
-              setComunidades(comunidadesAtualizadas);
+
+              fetch('/api/comunidades', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(comunidade)
+              })
+              .then(async (response) => {
+                const dados = await response.json();
+                const comunidade = dados.registroCriado;
+                const comunidadesAtualizadas = [...comunidades, comunidade];
+                setComunidades(comunidadesAtualizadas);
+              })
             }}>
               <div>
                 <input
@@ -159,17 +185,19 @@ export default function Home() {
               })}
             </ul>
           </RelationsBoxWrapper>
+
           <RelationsBoxWrapper>
             <h2 className="smallTitle">
               Comunidades ({comunidades.length})
             </h2>
+
             <ul>
-              {comunidades.map((itemAtual) => {
+              {comunidades.map((community) => {
                 return (
-                  <li key={itemAtual.id}>
-                    <a href={`/users/${itemAtual.title}`}>
-                      <img src={itemAtual.image} />
-                      <span>{itemAtual.title}</span>
+                  <li key={community.id}>
+                    <a href={`/communities/${community.title}`}>
+                      <img src={community.imageUrl} />
+                      <span>{community.title}</span>
                     </a>
                   </li>
                 )
