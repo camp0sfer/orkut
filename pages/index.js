@@ -1,4 +1,6 @@
 import React from 'react';
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
 import MainGrid from '../src/components/MainGrid'
 import Box from '../src/components/Box'
 import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/OrkutCommons';
@@ -48,8 +50,8 @@ function ProfileRelationsBox(propriedades) {
   )
 }
 
-export default function Home() {
-  const gitUser = 'camp0sFer';
+export default function Home(props) {
+  const usuarioConectado = props.gitUser;
   const amigos = [
     'fbianca',
     'juunegreiros',
@@ -100,10 +102,10 @@ export default function Home() {
 
   return (
     <>
-      <AlurakutMenu githubUser={gitUser}></AlurakutMenu>
+      <AlurakutMenu gitUser={usuarioConectado}></AlurakutMenu>
       <MainGrid>
         <div className="profileArea" style={{ gridArea: 'profileArea' }}>
-          <ProfileSidebar gitUser={gitUser}></ProfileSidebar>
+          <ProfileSidebar gitUser={usuarioConectado}></ProfileSidebar>
         </div>
         <div className="welcomeArea" style={{ gridArea: 'welcomeArea' }}>
           <Box>
@@ -125,7 +127,7 @@ export default function Home() {
               const comunidade = {
                 title: dadosDoForm.get('title'),
                 imageUrl: dadosDoForm.get('image'),
-                creatorSlug: gitUser
+                creatorSlug: usuarioConectado
               }
 
               fetch('/api/comunidades', {
@@ -208,4 +210,33 @@ export default function Home() {
       </MainGrid>
     </>
   )
+}
+
+export async function getServerSideProps(context){
+  const cookies = nookies.get(context)
+  const token = cookies.USER_TOKEN;
+
+  const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+    headers: {
+      Authorization: token
+    }
+  })
+  .then((resposta) => resposta.json())
+
+  if(!isAuthenticated){
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false
+      }
+    }
+  }
+
+  const { githubUser } = jwt.decode(token);
+
+  return {
+    props: {
+      gitUser: githubUser
+    } //will be passed to the page component as props
+  }
 }
